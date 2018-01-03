@@ -128,7 +128,7 @@ A todo is represented in JSON using the following format:
 |Name|Type|Description|
 |----|----|-----------|
 |`id`|`int`|The unique identifier for the todo item.|
-|`name`|`string`|The short name of the todo item. Max 512 characters.|
+|`name`|`string`|The short name of the todo item. Max 256 characters.|
 |`state`|`int`|The current state of the todo.|
 |`tag_id`|`int`|The ID of the tag of this todo.|
 |`owner_id`|`int`?|The ID of the owner of this todo. Present only on detailed information.|
@@ -250,10 +250,11 @@ tags will be listed - regardless of whether there are visible todos associated
 with a tag_id.
 
 A tag is represented in JSON using the following format:
+
 |Name|Type|Description|
 |----|----|-----------|
 |`id`|`int`|ID of the tag.|
-|`name`|`string`|The name of the tag. Max 256 characters.|
+|`name`|`string`|The name of the tag. Max 16 characters.|
 
 ### Get a list of tags
 
