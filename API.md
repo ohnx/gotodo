@@ -1,7 +1,9 @@
 
 # API
 
-The API always expects and replies back JSON-formatted data.
+The API always expects and replies back JSON-formatted data. Note that if JSON
+data is not given to the API, or if expected data is missing, the API will
+simply reply with an empty page and a 400 Bad Request error.
 It consists of a number of endpoints that each focus on certain aspects of the
 todo application.
 
@@ -76,7 +78,7 @@ POST /api/token/new
 #### Behaviour
 
 * If `type` is a primary, `username` and `password` are both present and both are valid, create a new primary token.
-* Else If `type` is primary or tertiary
+* Else if `type` is primary or tertiary
     * If `username` and `password` are both present and both are valid, create a new token of the requested type.
     * If `authority` is present and is a valid primary token, create a new token of the requested type.
 * Else, return an error.
@@ -105,13 +107,10 @@ POST /api/token/invalidate
 
 #### Behaviour
 
-* If `token` is a valid primary token:
-    * If `authority` is present and is equal to the contents of `token`, invalidate the token.
-    * Else if `username` and `password` are present and valid, invalidate the token.
-    * Else, return an error.
-* Else If `token` is a valid secondary or tertiary token:
-    * If `authority` is present and a valid primary token, invalidate the token.
-    * Else if `username` and `password` are present and valid, invalidate the token.
+* If `username` and `password` are present and valid, invalidate the token.
+* Else if `authority` is present
+    * If `token` is a primary token and equal to the contents of `authority`, invalidate the token.
+    * Else if `token` is a secondary or tertiary token and `authority` is a primary token, invalidate the token.
     * Else, return an error.
 * Else, return an error.
 
