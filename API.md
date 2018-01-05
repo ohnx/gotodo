@@ -244,9 +244,8 @@ POST /api/todos/list
 The `tags` endpoint deals with tags. At the moment, the API only supports
 listing all tags; addition and removal of tags is not yet implemented.
 
-Note that authenication is not required in order to list tags, and that all
-tags will be listed - regardless of whether there are visible todos associated
-with a tag_id.
+A valid primary token must be supplied in order to list tokens. This is to
+prevent DoS attacks.
 
 A tag is represented in JSON using the following format:
 
@@ -263,11 +262,14 @@ GET /api/tags/list
 
 #### Parameters
 
-None.
+|Name|Type|Description|
+|----|----|-----------|
+|`authority`|`string`?|A primary token.|
 
 #### Behaviour
 
-Return a list of tags.
+* If a valid authority is given, return a list of tags.
+* Else, return an error.
 
 #### Response
 
