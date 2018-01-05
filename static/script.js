@@ -3,7 +3,8 @@
 // LocalStorage helper
 const LOCALSTORAGE_KEYS = {
   TOKEN: 1,
-  USERNAME: 2
+  USERNAME: 2,
+  TAGS: 3
 };
 const API_ROOT = "/api"
 
@@ -78,11 +79,131 @@ function notify(msg, isBad) {
 }
 
 // Own functions
+function genTagColors() {
+  var possibleColors = ["#07457E", "#FFC914", "#7C077E", "#17BEBB", "#F17300", "#76B041", "#8C0000"];
+  var curColors = possibleColors.slice();
+  var q;
+
+  // load existing colours
+  var oldColours = null;//localStorage.getItem(LOCALSTORAGE_KEYS.TAGS);
+  if (oldColours) {
+    var oldColors = JSON.parse(oldColours);
+    for (var i = 0; i < oldColors.length; i++) {
+      for (var j = 0; j < tags.length; j++) {
+        if (oldColors[i].id == tags[j].id) {
+          // restore the existing color
+          tags[j].color = oldColors[i].color;
+          q = curColors.indexOf(tags[j].color);
+          if (q > -1) curColors.splice(q, 1);
+          break;
+        }
+      }
+    }
+  }
+
+  // only generate for those tags that don't already have colours
+  for (var i = 0; i < tags.length; i++) {
+    if (!tags[i].hasOwnProperty("color")) {
+      // Ran out of colors
+      if (curColors.length == 0) curColors = possibleColors.slice();
+      tags[i].color = curColors[Math.floor(Math.random()*curColors.length)];
+      q = curColors.indexOf(tags[i].color);
+      if (q > -1) curColors.splice(q, 1);
+    }
+  }
+
+  // store the results
+  localStorage.setItem(LOCALSTORAGE_KEYS.TAGS, JSON.stringify(tags));
+}
+
+function tagToColor(tag) {
+  for (var i = 0; i < tags.length; i++) {
+    if (tag == tags[i].id) return tags[i].color;
+  }
+  return "#000";
+}
+
+var selected = [];
+function updateFilter() {
+  var strs = ["", "", "", "", ""];
+  for (var i = 0; i < todos.length; i++) {
+    // first check if this todo is selected
+    if (!selected.indexOf(todos[i].tag_id)) continue;
+    // it is, append the data
+    strs[todos[i].state] += "<li style=\"color: " + tagToColor(todos[i].tag_id) + "\">";
+    strs[todos[i].state] += todos[i].name + "</li>";
+  }
+  for (var i = 1; i < 5; i++) {
+    document.getElementById("todos-"+i).innerHTML = strs[i];
+  }
+}
+
+function tagLinkHook(e) {
+  var elem = e.target;
+
+  // toggle color
+  var temp = elem.style.backgroundColor;
+  elem.style.backgroundColor = elem.style.color;
+  elem.style.color = temp;
+
+  // add to or remove from selected
+  var val = parseInt(elem.dataset.value);
+  var index = selected.indexOf(val);
+  if (index > -1) {
+    selected.splice(index, 1);
+  } else {
+    selected.push(val);
+  }
+  updateFilter();
+}
+function hookTags() {
+  var tagElems = document.getElementsByClassName("tag-list-item");
+
+  for (var i = 0; i < tagElems.length; i++) {
+    tagElems[i].addEventListener('click', tagLinkHook);
+  }
+}
+function syncTags() {
+  var str = "";
+  var str2 = "";
+
+  genTagColors();
+
+  for (var i = 0; i < tags.length; i++) {
+    selected.push(tags[i].id);
+    str += "<option value=\"" + tags[i].id + "\" style=\"color: " + tags[i].color + ";\">" + tags[i].name + "</option>";
+    str2 += "<li class=\"tag-list-item\" data-value=\"" + tags[i].id + "\" style=\"background-color: " + tags[i].color + "; border: 1px solid " + tags[i].color + "; color: #fff;\">" + tags[i].name + "</li>";
+  }
+
+  document.getElementById("me-tagid").innerHTML = str;
+  document.getElementById("mgmnt-tags").innerHTML = str2;
+  setTimeout(hookTags, 50);
+}
+function fetchTags() {
+  post("/tags/list", {
+    authority: localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN),
+  }, function (text) {
+    try {
+      var json = JSON.parse(text);
+      if (json.error) {
+        notify("Failed to fetch tags: " + json.error, true);
+      } else {
+        tags = json.tags;
+        syncTags();
+      }
+    } catch (e) {
+      notify("Failed to fetch tags: " + e, true);
+    }
+  });
+}
 function loginOk() {
   document.getElementById("login-password").value = "";
-  document.getElementById("mgmnt-panel-username").value = localStorage.getItem(LOCALSTORAGE_KEYS.USERNAME);
+  document.getElementById("mgmnt-panel-username").innerHTML = localStorage.getItem(LOCALSTORAGE_KEYS.USERNAME);
   document.getElementById("login-panel").style.display = "none";
   document.getElementById("mgmnt-panel").style.display = "block";
+
+  fetchTags();
+  updateTodos();
 }
 function logoutOk() {
   document.getElementById("login-panel").style.display = "block";
@@ -170,9 +291,10 @@ function invalidateToken() {
     }
   });
 }
+
 function createToken() {
   post("/token/new", {
-    type: document.getElementById("mt-tokentype").value,
+    type: parseInt(document.getElementById("mt-tokentype").value),
     authority: localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN)
   }, function (text) {
     try {
@@ -186,6 +308,28 @@ function createToken() {
       }
     } catch (e) {
       notify("Failed to invalidate token: " + e, true);
+    }
+  });
+}
+
+function updateTodos() {
+  var obj = {};
+  var token = localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN);
+  if (token) {
+    obj.authority = token;
+  }
+  post("/todos/list", obj, function (text) {
+    try {
+      var json = JSON.parse(text);
+      if (json.todos) {
+        todos = json.todos;
+      } else {
+        // Empty array
+        todos = [];
+      }
+      updateFilter();
+    } catch (e) {
+      notify("Failed to fetch list of todos: " + e, true);
     }
   });
 }
@@ -232,4 +376,5 @@ function registerUIButtons() {
   registerModalCloses();
   registerUIButtons();
   check_login();
+  updateTodos();
 })();

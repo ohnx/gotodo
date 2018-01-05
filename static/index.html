@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <title>Mason's todo tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -34,7 +35,11 @@
         </div>
         <div class="grid-col-2" id="mgmnt-panel">
           <h2>&nbsp;</h2>
-          <p>You are currently authenticated as <span id="mgmnt-panel-username">nobody</span>.</p>
+          <p>You are currently authenticated as <b id="mgmnt-panel-username">nobody</b>.</p>
+          <p>The following tags are visible to you:</p>
+          <ul class="tag-list" id="mgmnt-tags"></ul>
+          <p>Click any tag to filter it.</p>
+          <p></p>
           <div class="right">
             <a class="button" href="#" id="mgmnt-token">Token Management</a>
             <a class="button" href="#" id="mgmnt-newtodo">Create a todo</a>
@@ -46,53 +51,21 @@
         <div class="grid-col-1">
          <h2>Ideas</h2>
          <ul id="todos-1" class="todo-list">
-           <li>Read a book</li>
-           <li>Do laundry</li>
-           <li>Go outside</li>
-           <li>Lorem ipsum dolor sit amet, praesent vulputate no pri. Perpetua assueverit per no. Dolor laoreet electram vis no.</li>
-           <li>Read a book</li>
-           <li>Do laundry</li>
-           <li>Go outside</li>
-           <li>Lorem ipsum dolor sit amet, praesent vulputate no pri. Perpetua assueverit per no. Dolor laoreet electram vis no.</li>
          </ul>
         </div>
         <div class="grid-col-1">
           <h2>Doing soon</h2>
           <ul id="todos-4" class="todo-list">
-           <li>Read a book</li>
-           <li>Do laundry</li>
-           <li>Go outside</li>
-           <li>Lorem ipsum dolor sit amet, praesent vulputate no pri. Perpetua assueverit per no. Dolor laoreet electram vis no.</li>
-           <li>Read a book</li>
-           <li>Do laundry</li>
-           <li>Go outside</li>
-           <li>Lorem ipsum dolor sit amet, praesent vulputate no pri. Perpetua assueverit per no. Dolor laoreet electram vis no.</li>
          </ul>
         </div>
         <div class="grid-col-1">
           <h2>In progress</h2>
           <ul id="todos-3" class="todo-list">
-           <li>Read a book</li>
-           <li>Do laundry</li>
-           <li>Go outside</li>
-           <li>Lorem ipsum dolor sit amet, praesent vulputate no pri. Perpetua assueverit per no. Dolor laoreet electram vis no.</li>
-           <li>Read a book</li>
-           <li>Do laundry</li>
-           <li>Go outside</li>
-           <li>Lorem ipsum dolor sit amet, praesent vulputate no pri. Perpetua assueverit per no. Dolor laoreet electram vis no.</li>
          </ul>
         </div>
         <div class="grid-col-1">
           <h2>Paused</h2>
           <ul id="todos-2" class="todo-list">
-           <li>Read a book</li>
-           <li>Do laundry</li>
-           <li>Go outside</li>
-           <li>Lorem ipsum dolor sit amet, praesent vulputate no pri. Perpetua assueverit per no. Dolor laoreet electram vis no.</li>
-           <li>Read a book</li>
-           <li>Do laundry</li>
-           <li>Go outside</li>
-           <li>Lorem ipsum dolor sit amet, praesent vulputate no pri. Perpetua assueverit per no. Dolor laoreet electram vis no.</li>
          </ul>
         </div>
       </div>
@@ -103,8 +76,8 @@
           <h1 id="md-name">Todo Name</h1>
           <div id="md-desc">Description of the Todo item</div>
           <div class="right">
-            <a class="button" href="#" id="mt-invalidate">Edit</a>
-            <a class="button button-danger modal-closer" href="#" id="mt-create">Close</a>
+            <a class="button" href="#" id="md-edit">Edit</a>
+            <a class="button button-danger modal-closer" href="#" id="md-close">Close</a>
           </div>
         </div>
         <div class="modal-view" id="modal-token">
@@ -135,7 +108,7 @@
           <div class="right">
             <a class="button" href="#" id="mt-invalidate">Invalidate Token</a>
             <a class="button" href="#" id="mt-create">Create Token</a>
-            <a class="button button-danger modal-closer" href="#" id="mt-create">Close</a>
+            <a class="button button-danger modal-closer" href="#" id="mt-close">Close</a>
           </div>
         </div>
         <div class="modal-view" id="modal-edittodo">

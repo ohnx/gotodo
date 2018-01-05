@@ -29,7 +29,8 @@ func main() {
 
     // Create endpoints
     tokenEndpoint := endpoints.NewTokenEndpoint()
-    //
+    //todoEndpoint := endpoints.NewTodoEndpoint()
+    todosEndpoint := endpoints.NewTodosEndpoint()
     tagsEndpoint := endpoints.NewTagsEndpoint()
 
     // Create a handler for endpoints
@@ -37,6 +38,8 @@ func main() {
     r.POST("/api/token/new", tokenEndpoint.New)
     r.POST("/api/token/invalidate", tokenEndpoint.Invalidate)
     //
+    r.GET("/api/todos/list", todosEndpoint.List)
+    r.POST("/api/todos/list", todosEndpoint.List)
     r.POST("/api/tags/list", tagsEndpoint.List)
 
     // Get the port

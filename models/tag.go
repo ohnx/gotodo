@@ -16,6 +16,7 @@ type (
     }
 )
 
+// List all tags in the database
 func ListAllTags() []Tag {
     // Get connection handle
     conn := database.GetConnection()
