@@ -113,7 +113,7 @@ function login() {
 }
 
 function logout() {
-  post("/type/invalidate", {
+  post("/token/invalidate", {
     token: localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN),
     authority: localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN)
   }, function (text) {
@@ -140,7 +140,7 @@ function check_login() {
   }, function (text) {
     try {
       var json = JSON.parse(text);
-      if (json.type != 9) {
+      if (json.type == 9) {
         // Session invalid
       } else {
         // All good!
@@ -148,6 +148,44 @@ function check_login() {
       }
     } catch (e) {
       
+    }
+  });
+}
+
+function invalidateToken() {
+  post("/token/invalidate", {
+    token: document.getElementById("mt-tokenvalue").value,
+    authority: localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN)
+  }, function (text) {
+    try {
+      var json = JSON.parse(text);
+      if (json.error) {
+        notify("Failed to invalidate token: " + json.error, true);
+      } else {
+        // All good!
+        notify("Token invalidated");
+      }
+    } catch (e) {
+      notify("Failed to invalidate token: " + e, true);
+    }
+  });
+}
+function createToken() {
+  post("/token/new", {
+    type: document.getElementById("mt-tokentype").value,
+    authority: localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN)
+  }, function (text) {
+    try {
+      var json = JSON.parse(text);
+      if (json.error) {
+        notify("Failed to create token: " + json.error, true);
+      } else {
+        // All good!
+        notify("New token created");
+        document.getElementById("mt-tokenvalue").value = json.token;
+      }
+    } catch (e) {
+      notify("Failed to invalidate token: " + e, true);
     }
   });
 }
@@ -178,6 +216,15 @@ function registerUIButtons() {
   // Logout button
   document.getElementById("mgmnt-logout").addEventListener('click', function() {
     logout();
+  });
+
+  // Modal - token management - invalidate token
+  document.getElementById("mt-invalidate").addEventListener('click', function () {
+    invalidateToken();
+  });
+  // Modal - token management - create token
+  document.getElementById("mt-create").addEventListener('click', function () {
+    createToken();
   });
 }
 

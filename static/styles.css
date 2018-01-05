@@ -194,6 +194,7 @@ textarea {
   right: 1em;
   display: inline-block;
   z-index: 90;
+  max-width: 50%;
 }
 .notification {
   padding: 1em;
@@ -204,5 +205,10 @@ textarea {
 .notification-bad {
   border: 1px solid #C2185B;
 }
-
+@media screen and (max-width: 830px) {
+  .notification-queue {
+    max-width: 100%;
+    right: 0;
+  }
+}
 

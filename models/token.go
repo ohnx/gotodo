@@ -118,7 +118,7 @@ func (token *Token) Remove() bool {
         return false
     }
 
-    log.Printf("Removed token #%d = %s from database", token.Id, token.Value)
+    log.Printf("Info: Removed token #%d = %s from database", token.Id, token.Value)
     return true
 }
 
