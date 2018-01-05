@@ -264,7 +264,7 @@ GET /api/tags/list
 
 |Name|Type|Description|
 |----|----|-----------|
-|`authority`|`string`?|A primary token.|
+|`authority`|`string`|A primary token.|
 
 #### Behaviour
 
@@ -275,6 +275,7 @@ GET /api/tags/list
 
 |Name|Type|Description|
 |----|----|-----------|
-|`tags`|`tag[]`?|Tags in the database.|
+|`error`|`string`?|If an error occurred, this field is present and a friendly error message is filled in appropriately.|
+|`tags`|`tag[]`?|If no error occurred, this field is present and contains an array of the tags in the database.|
 
 
