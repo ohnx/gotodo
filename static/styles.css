@@ -243,3 +243,6 @@ textarea {
   border: 1px solid #0a7e07;
   color: #fff;
 }
+#md-edit {
+  display: none;
+}

@@ -18,6 +18,9 @@
           <p>This is a public listing of Mason's to-do items and their statuses.</p>
           <p>The code powering this website is completely open-source and available on <a href="https://github.com/ohnx/gotodo">GitHub</a>.</p>
           <p>Some of the listings require authentication to view.</p>
+          <h2>Tags</h2>
+          <ul class="tag-list" id="mgmnt-tags"></ul>
+          <p>Click any tag to filter it.</p>
         </div>
       </div>
       <div class="grid-row">
@@ -36,10 +39,6 @@
         <div class="grid-col-2" id="mgmnt-panel">
           <h2>&nbsp;</h2>
           <p>You are currently authenticated as <b id="mgmnt-panel-username">nobody</b>.</p>
-          <p>The following tags are visible to you:</p>
-          <ul class="tag-list" id="mgmnt-tags"></ul>
-          <p>Click any tag to filter it.</p>
-          <p></p>
           <div class="right">
             <a class="button" href="#" id="mgmnt-token">Token Management</a>
             <a class="button" href="#" id="mgmnt-newtodo">Create a todo</a>
@@ -115,10 +114,10 @@
           <h1><input type="text" placeholder="Name" id="me-name" class="inherit"></h1>
           <textarea id="me-description"></textarea>
           <select id="me-state">
-            <option value="0">Ideas</option>
-            <option value="1">Doing soon</option>
-            <option value="2">In progress</option>
-            <option value="3">Paused</option>
+            <option value="1">Ideas</option>
+            <option value="2">Doing soon</option>
+            <option value="3">In progress</option>
+            <option value="4">Paused</option>
           </select>
           <select id="me-tagid">
           </select>

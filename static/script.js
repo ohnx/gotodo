@@ -6,12 +6,13 @@ const LOCALSTORAGE_KEYS = {
   USERNAME: 2,
   TAGS: 3
 };
-const API_ROOT = "/api"
+const API_ROOT = "/api";
 
 // Global variables
 var todos = [];
 var tags = [];
-var editing_todo_id;
+var focus_id = -1;
+var focus_values = {};
 
 // Helper functions
 function post(url, data, callback) {
@@ -20,13 +21,39 @@ function post(url, data, callback) {
 
   xmlhttp.onreadystatechange = function() {
     if (xmlhttp.readyState == 4) {
-      // Ready for stuff
-      callback(xmlhttp.responseText);
+      // Nice reasons why errors occur
+      if (xmlhttp.status >= 500) {
+        callback("API server error");
+      } else if (xmlhttp.status == 404) {
+        callback("Incorrect server configuration");
+      } else {
+        callback(xmlhttp.responseText);
+      }
     }
   };
 
   xmlhttp.setRequestHeader("Content-Type", "application/json");
   xmlhttp.send(JSON.stringify(data));
+}
+
+function get(url, callback) {
+  var xmlhttp = new XMLHttpRequest();
+  xmlhttp.open("GET", API_ROOT + url, true);
+
+  xmlhttp.onreadystatechange = function() {
+    if (xmlhttp.readyState == 4) {
+      // Nice reasons why errors occur
+      if (xmlhttp.status >= 500) {
+        callback("API server error");
+      } else if (xmlhttp.status == 404) {
+        callback("Incorrect server configuration");
+      } else {
+        callback(xmlhttp.responseText);
+      }
+    }
+  };
+
+  xmlhttp.send();
 }
 
 var modal_showing = null;
@@ -58,14 +85,11 @@ function hideModal(dont_hide_backdrop) {
 function registerModalCloses() {
   var closes = document.getElementsByClassName("modal-closer");
   for (var i = 0; i < closes.length; i++) {
-    closes[i].addEventListener('click', function() {
+    closes[i].addEventListener('click', function(e) {
       hideModal();
-    });
+      e.preventDefault();
+    }, false);
   }
-}
-
-function hookLink(callback) {
-  
 }
 
 function notify(msg, isBad) {
@@ -123,19 +147,36 @@ function tagToColor(tag) {
   return "#000";
 }
 
+function todoLinkHook(e) {
+  var elem = e.target;
+
+  // fetch info about this todo
+  focus_id = parseInt(elem.dataset.id);
+  infoTodo();
+  e.preventDefault();
+}
+function hookTodos() {
+  var todoElems = document.getElementsByClassName("todo-item");
+
+  for (var i = 0; i < todoElems.length; i++) {
+    todoElems[i].addEventListener('click', todoLinkHook, false);
+  }
+}
 var selected = [];
 function updateFilter() {
   var strs = ["", "", "", "", ""];
   for (var i = 0; i < todos.length; i++) {
     // first check if this todo is selected
-    if (!selected.indexOf(todos[i].tag_id)) continue;
+    if (selected.indexOf(todos[i].tag_id) < 0) continue;
+
     // it is, append the data
-    strs[todos[i].state] += "<li style=\"color: " + tagToColor(todos[i].tag_id) + "\">";
-    strs[todos[i].state] += todos[i].name + "</li>";
+    strs[todos[i].state] += "<li style=\"color: " + tagToColor(todos[i].tag_id) + "\" ";
+    strs[todos[i].state] += "class=\"todo-item\" data-id=\"" + todos[i].id + "\">" + todos[i].name + "</li>";
   }
   for (var i = 1; i < 5; i++) {
     document.getElementById("todos-"+i).innerHTML = strs[i];
   }
+  setTimeout(hookTodos, 50);
 }
 
 function tagLinkHook(e) {
@@ -155,12 +196,13 @@ function tagLinkHook(e) {
     selected.push(val);
   }
   updateFilter();
+  e.preventDefault();
 }
 function hookTags() {
   var tagElems = document.getElementsByClassName("tag-list-item");
 
   for (var i = 0; i < tagElems.length; i++) {
-    tagElems[i].addEventListener('click', tagLinkHook);
+    tagElems[i].addEventListener('click', tagLinkHook, false);
   }
 }
 function syncTags() {
@@ -179,10 +221,25 @@ function syncTags() {
   document.getElementById("mgmnt-tags").innerHTML = str2;
   setTimeout(hookTags, 50);
 }
+
+function loginOk() {
+  document.getElementById("login-password").value = "";
+  document.getElementById("mgmnt-panel-username").innerHTML = localStorage.getItem(LOCALSTORAGE_KEYS.USERNAME);
+  document.getElementById("login-panel").style.display = "none";
+  document.getElementById("mgmnt-panel").style.display = "block";
+  document.getElementById("md-edit").style.display = "inline-block";
+
+  updateTodos();
+}
+function logoutOk() {
+  document.getElementById("login-panel").style.display = "block";
+  document.getElementById("mgmnt-panel").style.display = "none";
+  document.getElementById("md-edit").style.display = "none";
+  updateTodos();
+}
+
 function fetchTags() {
-  post("/tags/list", {
-    authority: localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN),
-  }, function (text) {
+  get("/tags/list", function (text) {
     try {
       var json = JSON.parse(text);
       if (json.error) {
@@ -190,24 +247,12 @@ function fetchTags() {
       } else {
         tags = json.tags;
         syncTags();
+        updateFilter();
       }
     } catch (e) {
-      notify("Failed to fetch tags: " + e, true);
+      notify("Failed to fetch tags: " + text, true);
     }
   });
-}
-function loginOk() {
-  document.getElementById("login-password").value = "";
-  document.getElementById("mgmnt-panel-username").innerHTML = localStorage.getItem(LOCALSTORAGE_KEYS.USERNAME);
-  document.getElementById("login-panel").style.display = "none";
-  document.getElementById("mgmnt-panel").style.display = "block";
-
-  fetchTags();
-  updateTodos();
-}
-function logoutOk() {
-  document.getElementById("login-panel").style.display = "block";
-  document.getElementById("mgmnt-panel").style.display = "none";
 }
 
 function login() {
@@ -228,7 +273,7 @@ function login() {
         loginOk();
       }
     } catch (e) {
-      notify("Failed to authenticate: " + e, true);
+      notify("Failed to authenticate: " + text, true);
     }
   });
 }
@@ -249,12 +294,12 @@ function logout() {
         logoutOk();
       }
     } catch (e) {
-      notify("Failed to sign off: " + e, true);
+      notify("Failed to sign off: " + text, true);
     }
   });
 }
 
-function check_login() {
+function checkLogin() {
   if (!localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN)) return;
   post("/token/type", {
     token: localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN)
@@ -287,7 +332,7 @@ function invalidateToken() {
         notify("Token invalidated");
       }
     } catch (e) {
-      notify("Failed to invalidate token: " + e, true);
+      notify("Failed to invalidate token: " + text, true);
     }
   });
 }
@@ -307,7 +352,7 @@ function createToken() {
         document.getElementById("mt-tokenvalue").value = json.token;
       }
     } catch (e) {
-      notify("Failed to invalidate token: " + e, true);
+      notify("Failed to invalidate token: " + text, true);
     }
   });
 }
@@ -329,7 +374,80 @@ function updateTodos() {
       }
       updateFilter();
     } catch (e) {
-      notify("Failed to fetch list of todos: " + e, true);
+      notify("Failed to fetch list of todos: " + text, true);
+    }
+  });
+}
+
+function updateTodo() {
+  post("/todo/update", {
+    todo: {
+      id: focus_id,
+      state: parseInt(document.getElementById("me-state").value),
+      tag_id: parseInt(document.getElementById("me-tagid").value),
+      public: document.getElementById("me-public").value == "yes",
+      name: document.getElementById("me-name").value,
+      description: document.getElementById("me-description").value,
+    },
+    authority: localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN),
+  }, function(text) {
+    try {
+      var json = JSON.parse(text);
+      if (json.error) {
+        notify("Failed to " + (focus_id == -1 ? "create" : "update") + " todo: " + json.error, true);
+      } else {
+        notify("Successfully " + (focus_id == -1 ? "created" : "updated") + " todo");
+        // Hide modal by default
+        hideModal();
+        updateTodos();
+      }
+    } catch (e) {
+      notify("Failed to " + (focus_id == -1 ? "create" : "update") + " todo: " + text, true);
+    }
+  });
+}
+
+function deleteTodo() {
+  post("/todo/remove", {
+    todo: {
+      id: focus_id,
+    },
+    authority: localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN),
+  }, function(text) {
+    try {
+      var json = JSON.parse(text);
+      if (json.error) {
+        notify("Failed to delete todo: " + json.error, true);
+      } else {
+        notify("Successfully deleted todo");
+        hideModal();
+      }
+    } catch (e) {
+      notify("Failed to delete todo: " + text, true);
+    }
+  });
+}
+
+function infoTodo() {
+  var obj = {};
+  var token = localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN);
+  if (token) {
+    obj.authority = token;
+  }
+  obj.todo = {id: focus_id};
+  post("/todo/info", obj, function(text) {
+    try {
+      var json = JSON.parse(text);
+      if (json.error) {
+        notify("Failed to fetch information for todo: " + json.error, true);
+      } else {
+        focus_values = json.todo;
+        document.getElementById("md-name").innerHTML = focus_values.name;
+        document.getElementById("md-desc").innerHTML = focus_values.description;
+        showModal("detailedtodo");
+      }
+    } catch (e) {
+      notify("Failed to fetch information for todo: " + text, true);
     }
   });
 }
@@ -337,9 +455,10 @@ function updateTodos() {
 // Init functions
 function registerUIButtons() {
   // Login button + enter press
-  document.getElementById("login-btn").addEventListener('click', function() {
+  document.getElementById("login-btn").addEventListener('click', function(e) {
     login();
-  });
+    e.preventDefault();
+  }, false);
   document.getElementById("login-password").addEventListener('keydown', function (e) {
     if (e.which == 13) {
       login();
@@ -347,34 +466,67 @@ function registerUIButtons() {
   });
 
   // Token management button
-  document.getElementById("mgmnt-token").addEventListener('click', function() {
+  document.getElementById("mgmnt-token").addEventListener('click', function(e) {
     showModal("token");
-  });
+    e.preventDefault();
+  }, false);
 
   // New todo button
-  document.getElementById("mgmnt-newtodo").addEventListener('click', function() {
-    editing_todo_id = 0;
+  document.getElementById("mgmnt-newtodo").addEventListener('click', function(e) {
+    focus_id = -1;
+    document.getElementById("me-name").value = "";
+    document.getElementById("me-description").value = "";
+    document.getElementById("me-state").selectedIndex = "0";
+    document.getElementById("me-tagid").selectedIndex = "0";
+    document.getElementById("me-public").checked = false;
     showModal("edittodo");
-  });
+    e.preventDefault();
+  }, false);
 
   // Logout button
-  document.getElementById("mgmnt-logout").addEventListener('click', function() {
+  document.getElementById("mgmnt-logout").addEventListener('click', function(e) {
     logout();
-  });
+    e.preventDefault();
+  }, false);
+
+  // Modal - detailed todo - edit todo
+  document.getElementById("md-edit").addEventListener('click', function (e) {
+    showModal("edittodo");
+    document.getElementById("me-name").value = focus_values.name;
+    document.getElementById("me-description").value = focus_values.description;
+    document.getElementById("me-state").selectedIndex = focus_values.state - 1;
+    document.getElementById("me-tagid").selectedIndex = focus_values.tag_id - 1;
+    document.getElementById("me-public").checked = focus_values.public;
+    e.preventDefault();
+  }, false);
 
   // Modal - token management - invalidate token
-  document.getElementById("mt-invalidate").addEventListener('click', function () {
+  document.getElementById("mt-invalidate").addEventListener('click', function (e) {
     invalidateToken();
-  });
+    e.preventDefault();
+  }, false);
   // Modal - token management - create token
-  document.getElementById("mt-create").addEventListener('click', function () {
+  document.getElementById("mt-create").addEventListener('click', function (e) {
     createToken();
-  });
+    e.preventDefault();
+  }, false);
+
+  // Modal - edit todo - delete todo
+  document.getElementById("me-delete").addEventListener('click', function (e) {
+    deleteTodo();
+    e.preventDefault();
+  }, false);
+  // Modal - edit todo - save changes
+  document.getElementById("me-save").addEventListener('click', function (e) {
+    updateTodo();
+    e.preventDefault();
+  }, false);
 }
 
 (function() {
   registerModalCloses();
   registerUIButtons();
-  check_login();
+  checkLogin();
   updateTodos();
+  fetchTags();
 })();
