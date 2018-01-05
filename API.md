@@ -20,6 +20,8 @@ A primary token can create only secondary or tertiary tokens, and secondary or
 tertiary tokens cannot create any tokens. When a primary token is invalidated,
 the tokens created by the primary token will still stay valid.
 
+Anyone can view the detailed informaiton for a public todo.
+
 Tertiary tokens only have permissions to create new todos under the user id of their
 owner's user. They cannot modify any todo. Secondary tokens have similar permissions,
 but they can also read the data of and modify a todo that is owned by the user id
@@ -194,11 +196,12 @@ POST /api/todo/info
 |Name|Type|Description|
 |----|----|-----------|
 |`todo`|`todo`|A todo item. All fields except for `id` are ignored.|
-|`authority`|`string`|A primary token.|
+|`authority`|`string`?|A primary token.|
 
 #### Behaviour
 
 * If `token` is a present and a valid primary or secondary token, the todo id exists in the database, and the todo associated with the todo id is owned by the token's owner, return detailed information on the todo.
+* Else If `token` is not present, the todo id exists in the database, and the todo is public, return detailed information on the todo.
 * Else, return an error.
 
 #### Response
@@ -236,7 +239,7 @@ POST /api/todos/list
 
 |Name|Type|Description|
 |----|----|-----------|
-|`todos`|`todo[]`?|Todos that match the query.|
+|`todos`|`todo[]`|Todos that match the query.|
 
 
 ## `tags` endpoint
@@ -262,20 +265,15 @@ GET /api/tags/list
 
 #### Parameters
 
-|Name|Type|Description|
-|----|----|-----------|
-|`authority`|`string`|A primary token.|
+None.
 
 #### Behaviour
 
-* If a valid authority is given, return a list of tags.
-* Else, return an error.
+Return a list of tags.
+
 
 #### Response
 
 |Name|Type|Description|
 |----|----|-----------|
-|`error`|`string`?|If an error occurred, this field is present and a friendly error message is filled in appropriately.|
-|`tags`|`tag[]`?|If no error occurred, this field is present and contains an array of the tags in the database.|
-
-
+|`tags`|`tag[]`|An array of the tags in the database.|

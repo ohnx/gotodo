@@ -42,7 +42,7 @@ func main() {
     r.POST("/api/todo/info", todoEndpoint.Info)
     r.GET("/api/todos/list", todosEndpoint.List)
     r.POST("/api/todos/list", todosEndpoint.List)
-    r.POST("/api/tags/list", tagsEndpoint.List)
+    r.GET("/api/tags/list", tagsEndpoint.List)
 
     // Get the port
     port := os.Getenv("PORT")

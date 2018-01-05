@@ -128,8 +128,8 @@ func (todo *Todo) ReadValues() bool {
     return false
 }
 
-// Read in the only the owner of a todo id. Returns true if values were read.
-func (todo *Todo) ReadOwner() bool {
+// Read in the only the owner and publicness of a todo id. Returns true if values were read.
+func (todo *Todo) ReadPermissions() bool {
     // Check that there is an input Id
     if todo.Id < 1 {
         return false
@@ -139,7 +139,7 @@ func (todo *Todo) ReadOwner() bool {
     conn := database.GetConnection()
 
     // prepare read statement
-    stmt, err := conn.Prepare("SELECT owner_id FROM todos WHERE id = ?")
+    stmt, err := conn.Prepare("SELECT owner_id, public FROM todos WHERE id = ?")
     if err != nil {
         log.Printf("Warning: Failed to read database: %s", err)
         return false
@@ -157,11 +157,19 @@ func (todo *Todo) ReadOwner() bool {
     // Check results
     for res.Next() {
         // Only care about the 1st result
-        err = res.Scan(&todo.OwnerId)
+        var boolConv int
+        err = res.Scan(&todo.OwnerId, &boolConv)
         if err != nil {
             log.Printf("Warning: Failed to read database: %s", err)
             return false
         }
+
+        if boolConv == 1 {
+            todo.Public = true
+        } else {
+            todo.Public = false
+        }
+
         return true
     }
 
@@ -226,7 +234,7 @@ func ListAllTodos(owner_id int) []Todo {
     for res.Next() {
         // Read in the values from the database
         var boolConv int
-        err = res.Scan(&todo.Id, &todo.State, &todo.TagId, &todo.OwnerId, &boolConv, &todo.Name, &todo.Desc)
+        err = res.Scan(&todo.Id, &todo.State, &todo.TagId, &todo.Name)
         if err != nil {
             log.Printf("Warning: Failed to read database: %s", err)
             return nil

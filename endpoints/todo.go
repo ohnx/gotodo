@@ -138,7 +138,7 @@ func (te TodoEndpoint) Update(w http.ResponseWriter, r *http.Request, p httprout
         todo := models.Todo{
             Id:     teur.Todo.Id,
         }
-        if !todo.ReadOwner() {
+        if !todo.ReadPermissions() {
             // Database error
             resp := TodoEndpointUpdateResponse{
                 Error: "Todo not found in database",
@@ -226,7 +226,7 @@ func (te TodoEndpoint) Remove(w http.ResponseWriter, r *http.Request, p httprout
     }
 
     // Check if the todo is owned by the correct person
-    if !terr.Todo.ReadOwner() {
+    if !terr.Todo.ReadPermissions() {
         // Database error
         resp := TodoEndpointRemoveResponse{
             Error: "Todo not found in database",
@@ -288,33 +288,14 @@ func (te TodoEndpoint) Info(w http.ResponseWriter, r *http.Request, p httprouter
     err := decoder.Decode(&teir)
 
     // Check for errors
-    if err != nil || len(teir.Auth) == 0 {
+    if err != nil {
         // Failed to parse user input... call it a user error
         w.WriteHeader(400)
         return
     }
 
-    // Stub an example token
-    auth := models.Token{
-        Value:  teir.Auth,
-    }
-
-    // Check the privileges on the auth token
-    if !auth.ReadValues() || auth.Type > 2 {
-        // User not authorized
-        resp := TodoEndpointInfoResponse{
-            Error: "Authorization token lacks information privilege",
-        }
-        jresp, _ := json.Marshal(resp)
-
-        // Write error + payload
-        w.WriteHeader(403)
-        fmt.Fprintf(w, "%s", jresp)
-        return
-    }
-
-    // Check if the todo is owned by the correct person
-    if !teir.Todo.ReadValues() {
+    // Read the permissions first to decide what to do
+    if !teir.Todo.ReadPermissions() {
         // Database error
         resp := TodoEndpointUpdateResponse{
             Error: "Todo not found in database",
@@ -326,15 +307,65 @@ func (te TodoEndpoint) Info(w http.ResponseWriter, r *http.Request, p httprouter
         fmt.Fprintf(w, "%s", jresp)
         return
     }
-    if teir.Todo.OwnerId != auth.OwnerId {
-        // Todo doesn't belong to the right owner
+
+    if !teir.Todo.Public {
+        // Todo is not public, need to check a token
+        if len(teir.Auth) == 0 {
+            // Token not specified, fake a not known error
+            resp := TodoEndpointUpdateResponse{
+                Error: "Todo not found in database",
+            }
+            jresp, _ := json.Marshal(resp)
+
+            // Write error + payload
+            w.WriteHeader(400)
+            fmt.Fprintf(w, "%s", jresp)
+            return
+        }
+
+        auth := models.Token{
+            Value:  teir.Auth,
+        }
+
+        // Check the privileges on the auth token
+        if !auth.ReadValues() || auth.Type > 2 {
+            // User not authorized
+            resp := TodoEndpointInfoResponse{
+                Error: "Authorization token lacks information privilege",
+            }
+            jresp, _ := json.Marshal(resp)
+
+            // Write error + payload
+            w.WriteHeader(403)
+            fmt.Fprintf(w, "%s", jresp)
+            return
+        }
+
+        // Check if the todo is owned by the correct person
+        if teir.Todo.OwnerId != auth.OwnerId  {
+            // Todo doesn't belong to the right owner
+            resp := TodoEndpointUpdateResponse{
+                Error: "User does not own todo",
+            }
+            jresp, _ := json.Marshal(resp)
+
+            // Write error + payload
+            w.WriteHeader(403)
+            fmt.Fprintf(w, "%s", jresp)
+            return
+        }
+    }
+
+    // All good, ready to send information now
+    if !teir.Todo.ReadValues() {
+        // Database error
         resp := TodoEndpointUpdateResponse{
-            Error: "User does not own todo",
+            Error: "Database error",
         }
         jresp, _ := json.Marshal(resp)
 
         // Write error + payload
-        w.WriteHeader(403)
+        w.WriteHeader(500)
         fmt.Fprintf(w, "%s", jresp)
         return
     }
