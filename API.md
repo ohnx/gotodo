@@ -127,12 +127,12 @@ A todo is represented in JSON using the following format:
 |Name|Type|Description|
 |----|----|-----------|
 |`id`|`int`|The unique identifier for the todo item.|
-|`name`|`string`|The short name of the todo item. Max 256 characters.|
 |`state`|`int`|The current state of the todo.|
 |`tag_id`|`int`|The ID of the tag of this todo.|
 |`owner_id`|`int`?|The ID of the owner of this todo. Present only on detailed information.|
 |`public`|`boolean`?|Whether or not this todo is public. Present only on detailed information.|
-|`description`|`string`|The in-depth description of this todo. Present only on detailed information.|
+|`name`|`string`|The short name of the todo item. Max 256 characters.|
+|`description`|`string`?|The in-depth description of this todo. Present only on detailed information.|
 
 ### Create a new or update an existing todo
 
