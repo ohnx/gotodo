@@ -21,6 +21,66 @@ type (
     }
 )
 
+// Inserts a new todo. Returns true on success, false on error.
+func (todo *Todo) InsertValues() bool {
+    // Check that there is no input Id
+    if todo.Id > 0 || len(todo.Name) == 0{
+        return false
+    }
+
+    // Get connection handle
+    conn := database.GetConnection()
+
+    // prepare insert statement
+    stmt, err := conn.Prepare("INSERT INTO todos(state, tag_id, owner_id, public, name, description) values(?,?,?,?,?,?)")
+
+    if err != nil {
+        log.Printf("Warning: Failed to write to database: %s", err)
+        return false
+    }
+    defer stmt.Close()
+
+    // Execute insert statement
+    _, err = stmt.Exec(todo.State, todo.TagId, todo.OwnerId, todo.Public, todo.Name, todo.Desc)
+    if err != nil {
+        log.Printf("Warning: Failed to write to database: %s", err)
+        return false
+    }
+
+    // No error
+    return true
+}
+
+// Updates an existing todo. Returns true on success, false on error.
+func (todo *Todo) WriteValues() bool {
+    // Check that there is an input Id
+    if todo.Id <= 0 || len(todo.Name) == 0 {
+        return false
+    }
+
+    // Get connection handle
+    conn := database.GetConnection()
+
+    // prepare insert statement
+    stmt, err := conn.Prepare("UPDATE todos SET state = ?, tag_id = ?, public = ?, name = ?, description = ? WHERE id = ?")
+
+    if err != nil {
+        log.Printf("Warning: Failed to write to database: %s", err)
+        return false
+    }
+    defer stmt.Close()
+
+    // Execute insert statement
+    _, err = stmt.Exec(todo.State, todo.TagId, todo.Public, todo.Name, todo.Desc, todo.Id)
+    if err != nil {
+        log.Printf("Warning: Failed to write to database: %s", err)
+        return false
+    }
+
+    // No error
+    return true
+}
+
 // Read in the values of a todo based on id. Returns true if values were read.
 func (todo *Todo) ReadValues() bool {
     // Check that there is an input Id
@@ -66,6 +126,75 @@ func (todo *Todo) ReadValues() bool {
 
     // No results
     return false
+}
+
+// Read in the only the owner of a todo id. Returns true if values were read.
+func (todo *Todo) ReadOwner() bool {
+    // Check that there is an input Id
+    if todo.Id < 1 {
+        return false
+    }
+
+    // Get connection handle
+    conn := database.GetConnection()
+
+    // prepare read statement
+    stmt, err := conn.Prepare("SELECT owner_id FROM todos WHERE id = ?")
+    if err != nil {
+        log.Printf("Warning: Failed to read database: %s", err)
+        return false
+    }
+    defer stmt.Close()
+
+    // Execute read statement
+    res, err := stmt.Query(todo.Id)
+    if err != nil {
+        log.Printf("Warning: Failed to read database: %s", err)
+        return false
+    }
+    defer res.Close()
+
+    // Check results
+    for res.Next() {
+        // Only care about the 1st result
+        err = res.Scan(&todo.OwnerId)
+        if err != nil {
+            log.Printf("Warning: Failed to read database: %s", err)
+            return false
+        }
+        return true
+    }
+
+    // No results
+    return false
+}
+
+// Remove a todo from the database based on Id. Returns true on successful removal.
+func (todo *Todo) Remove() bool {
+    // Check that there is an input Id
+    if todo.Id <= 0 {
+        return false
+    }
+
+    // Get connection handle
+    conn := database.GetConnection()
+
+    // prepare delete statement
+    stmt, err := conn.Prepare("DELETE FROM todos WHERE id = ?")
+    if err != nil {
+        log.Printf("Warning: Failed to write to database: %s", err)
+        return false
+    }
+    defer stmt.Close()
+
+    // Execute delete statement
+    _, err = stmt.Exec(todo.Id)
+    if err != nil {
+        log.Printf("Warning: Failed to write to database: %s", err)
+        return false
+    }
+
+    return true
 }
 
 // List all viewable todos to the owner_id in the database

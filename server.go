@@ -29,7 +29,7 @@ func main() {
 
     // Create endpoints
     tokenEndpoint := endpoints.NewTokenEndpoint()
-    //todoEndpoint := endpoints.NewTodoEndpoint()
+    todoEndpoint := endpoints.NewTodoEndpoint()
     todosEndpoint := endpoints.NewTodosEndpoint()
     tagsEndpoint := endpoints.NewTagsEndpoint()
 
@@ -37,7 +37,9 @@ func main() {
     r.POST("/api/token/type", tokenEndpoint.Type)
     r.POST("/api/token/new", tokenEndpoint.New)
     r.POST("/api/token/invalidate", tokenEndpoint.Invalidate)
-    //
+    r.POST("/api/todo/update", todoEndpoint.Update)
+    r.POST("/api/todo/remove", todoEndpoint.Remove)
+    r.POST("/api/todo/info", todoEndpoint.Info)
     r.GET("/api/todos/list", todosEndpoint.List)
     r.POST("/api/todos/list", todosEndpoint.List)
     r.POST("/api/tags/list", tagsEndpoint.List)
