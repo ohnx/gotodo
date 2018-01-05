@@ -81,7 +81,7 @@ POST /api/token/new
 * Else if `type` is primary or tertiary
     * If `username` and `password` are both present and both are valid, create a new token of the requested type.
     * If `authority` is present and is a valid primary token, create a new token of the requested type.
-* Else, return an error.
+* Else, return an error 400 or 403.
 
 #### Response
 
@@ -111,8 +111,8 @@ POST /api/token/invalidate
 * Else if `authority` is present
     * If `token` is a primary token and equal to the contents of `authority`, invalidate the token.
     * Else if `token` is a secondary or tertiary token and `authority` is a primary token, invalidate the token.
-    * Else, return an error.
-* Else, return an error.
+    * Else, return an error 400 or 403.
+* Else, return an error 400.
 
 #### Response
 

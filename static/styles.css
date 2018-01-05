@@ -1,0 +1,208 @@
+/* fonts */
+@import url('https://fonts.googleapis.com/css?family=Source+Code+Pro');
+
+/* clean slate */
+html, body {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  font-family: 'Source Code Pro', monospace;
+}
+*, *:after, *:before {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+h2, h3, h4, h5, h6 {
+  margin-top: 0;
+}
+
+/* links */
+a {
+  color: #259b24;
+  font-weight: bold;
+}
+
+a:hover, a:active, a:focus {
+  color: #0a7e07;
+}
+
+/* navbar */
+nav {
+  background-color: #259b24;
+  overflow: hidden;
+}
+nav .branding {
+  float: left;
+  color: #fff;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-weight: bold;
+}
+nav a {
+  float: right;
+  color: #fff;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-weight: normal;
+}
+nav a:hover, nav a:active, nav a:focus {
+  background-color: #0a7e07;
+  color: #fff;
+}
+
+/* grid layout */
+.grid-container {
+  margin: 0 auto;
+  max-width: calc(100% - 5em);
+}
+.grid-row {
+  width: 100%;
+  padding: 10px 0;
+}
+.grid-col-1, .grid-col-2, .grid-col-3, .grid-col-4 {
+  float: left;
+  padding: 0 10px;
+}
+.grid-col-1 {
+  width: 25%;
+}
+.grid-col-2 {
+  width: 50%;
+}
+.grid-col-3 {
+  width: 75%;
+}
+.grid-col-4 {
+  width: 100%;
+}
+.grid-row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+.right {
+  text-align: right;
+}
+@media screen and (max-width: 830px) {
+  .grid-container {
+    margin: 0;
+    max-width: 100%;
+  }
+  .grid-col-1, .grid-col-2, .grid-col-3, .grid-col-4 {
+    float: none;
+    width: 100%;
+  }
+}
+
+/* modals */
+.modal-backdrop {
+  height: 100%;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  z-index: 10;
+  position: fixed;
+  top: 0;
+  overflow-y: auto;
+  display: none;
+}
+.modal {
+  padding: 1em;
+  margin: 10vh auto;
+  width: 100%;
+  max-width: 800px;
+  background-color: #fff;
+}
+.modal-view {
+  display: none;
+}
+.modal-view h1 {
+  margin-top: 0;
+}
+
+/* inputs */
+input, select, textarea {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.5em;
+  font-family: 'Source Code Pro', monospace;
+  font-size: inherit;
+  padding: 10px;
+  outline: none;
+  border: 1px solid #333;
+}
+input:focus, select:focus, textarea:focus {
+  border: 1px solid #0a7e07;
+}
+input[type=checkbox] {
+  display: inline-block;
+  width: auto;
+  margin-bottom: auto;
+}
+textarea {
+  min-height: 30vh;
+  resize: vertical;
+}
+
+/* buttons */
+.button {
+  background-color: #259b24;
+  border: none;
+  color: #fff;
+  padding: 8px 16px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 8px;
+  font-weight: normal;
+}
+.button:hover, .button:active, .button:focus {
+  color: #fff;
+  background-color: #0a7e07;
+  outline: 0;
+}
+.button-danger {
+  background-color: #C2185B;
+}
+.button-danger:hover, .button-danger:active, .button-danger:focus {
+  background-color: #880E4F;
+  color: #fff;
+}
+
+/* custom styles */
+#mgmnt-panel {
+  display: none;
+}
+.todo-list {
+  padding: 0;
+  list-style-type: none;
+}
+.todo-list li {
+  border: 1px solid #666;
+  border-top: none;
+  padding: 10px;
+  cursor: pointer;
+}
+.todo-list li:first-child {
+  border-top: 1px solid #666;
+}
+.notification-queue {
+  position: fixed;
+  top: 1em;
+  right: 1em;
+  display: inline-block;
+  z-index: 90;
+}
+.notification {
+  padding: 1em;
+  background-color: #fff;
+  margin-bottom: 1em;
+  border: 1px solid #0a7e07;
+}
+.notification-bad {
+  border: 1px solid #C2185B;
+}
+
+
