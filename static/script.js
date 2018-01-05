@@ -245,7 +245,7 @@ function fetchTags() {
       if (json.error) {
         notify("Failed to fetch tags: " + json.error, true);
       } else {
-        tags = json.tags;
+        tags = json.tags ? json.tags : [];
         syncTags();
         updateFilter();
       }

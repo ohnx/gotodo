@@ -72,6 +72,8 @@ func InitializeDatabase(filename string) {
     defer Disconnect()
     var err error
 
+    log.Println("Info: Database file not found, creating new database...")
+
     // Initialize all the tables
     _, err = conn.Exec(initStmt)
     if err != nil {
@@ -86,6 +88,18 @@ func InitializeDatabase(filename string) {
 
     // TODO: configurable
     _, err = stmt.Exec("ohnx", Hash("password"))
+    if err != nil {
+        log.Fatalf("Failed to initialize database: %s", err)
+    }
+
+    // Add initial blank tag
+    stmt, err = conn.Prepare("INSERT INTO tags(name) values(?)")
+    if err != nil {
+        log.Fatalf("Failed to initialize database: %s", err)
+    }
+
+    // TODO: configurable
+    _, err = stmt.Exec("Unsorted")
     if err != nil {
         log.Fatalf("Failed to initialize database: %s", err)
     }
