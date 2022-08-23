@@ -134,6 +134,7 @@ A todo is represented in JSON using the following format:
 |`owner_id`|`int`?|The ID of the owner of this todo. Present only on detailed information.|
 |`public`|`boolean`?|Whether or not this todo is public. Present only on detailed information.|
 |`name`|`string`|The short name of the todo item. Max 256 characters.|
+|`due_date`|`time.Time`|The due date of the TODO. The server expects and returns the ISO8601-formatted UTC time.|
 |`description`|`string`?|The in-depth description of this todo. Present only on detailed information.|
 
 ### Create a new or update an existing todo

@@ -97,17 +97,35 @@ function prettyPrintDue(server_date) {
   let due_date = new Date(server_date);
   let time_delta = due_date - now;
 
+  let timePrintFunc = function(dt) {
+    return dt.toLocaleTimeString()
+              .split("").reverse().join("")
+              .replace(":00", "")
+              .split("").reverse().join("");
+  };
+
   if (time_delta < MS_IN_A_WEEK) {
     // due within a week
     if (time_delta < 0) {
       // due in past, say the date
-      return due_date.getMonth() + "/" + due_date.getDay();
+      if ((now.getDate() == due_date.getDate()) && 
+          (now.getMonth() == due_date.getMonth()) &&
+          (now.getYear() == due_date.getYear())) {
+        return timePrintFunc(due_date) + " today";
+      } else {
+        return (due_date.getMonth()+1) + "/" + due_date.getDate();
+      }
     } else {
       // due in future, say day of week + date
       if (time_delta < MS_IN_A_DAY) {
-        return "today!";
+        if (now.getDate() == due_date.getDate()) {
+          // removes the :00 in the seconds
+          return timePrintFunc(due_date) + " today";
+        } else {
+          return timePrintFunc(due_date) + " tomorrow";
+        }
       }
-      return daysOfWeek[now.getDay()];
+      return timePrintFunc(due_date) + " " + daysOfWeek[due_date.getDay()];
     }
   } else {
     // too far in the future
@@ -220,6 +238,13 @@ function hookTodos() {
 
   for (var i = 0; i < todoElems.length; i++) {
     todoElems[i].addEventListener('click', todoLinkHook, false);
+    todoElems[i].addEventListener('dragstart', function(e) {
+      const dt = event.dataTransfer;
+      let id = parseInt(e.target.dataset.id);
+      dt.setData("application/x.todoapp", e.target.dataset.id);
+      dt.setData("text/plain", e.target.dataset.id);
+      // dt.setData("text/plain", "");
+    });
   }
 }
 var selected = [];
@@ -231,7 +256,7 @@ function updateFilter() {
 
     // it is, append the data
     strs[todos[i].state] += "<li style=\"color: " + tagToColor(todos[i].tag_id) + "\" ";
-    strs[todos[i].state] += "class=\"todo-item\" data-id=\"" + todos[i].id + "\">" + todos[i].name;
+    strs[todos[i].state] += "class=\"todo-item\" data-id=\"" + todos[i].id + "\" draggable=\"true\">" + todos[i].name;
     let dueStr = prettyPrintDue(todos[i].due_date);
     if (dueStr) {
       strs[todos[i].state] += "<div class=\"due-date\"\" data-id=\"" + todos[i].id + "\">(due " + dueStr + ")</div>";
@@ -650,5 +675,63 @@ function registerUIButtons() {
     if (e.key == 'Escape') {
       e.preventDefault();
     }
+  });
+  document.addEventListener("dragover", function(e) {
+    e.preventDefault();
+  });
+  document.addEventListener('drop', function(e) {
+    e.preventDefault();
+    var data = e.dataTransfer.getData("application/x.todoapp");
+
+    let yMin = document.getElementById("todos-container").getBoundingClientRect().top;
+    if ((yMin > e.clientY) || (!data)) {
+      // too high up
+      return;
+    }
+
+    // figure out which box the user dragged into
+    let destList = 1;
+    for (var i = 1; i < 5; i++) {
+      let rect = document.getElementById("todos-" + i).getBoundingClientRect();
+      if (e.clientX > rect.x) {
+        // further right than we are, so we keep going
+        destList = i;
+      } else {
+        // to the left of us, so we know it's us now
+        break;
+      }
+    }
+
+    post("/todo/info", {
+      authority: localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN),
+      todo: {id: parseInt(data)},
+    }, function(text) {
+      try {
+        var json = JSON.parse(text);
+        if (json.error) {
+          notify("Failed to fetch information for todo: " + json.error, true);
+        } else {
+          json.todo.state = parseInt(destList);
+          post("/todo/update", {
+            todo: json.todo,
+            authority: localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN),
+          }, function(text) {
+            try {
+              var json = JSON.parse(text);
+              if (json.error) {
+                notify("Failed to update todo: " + json.error, true);
+              } else {
+                notify("Successfully updated todo");
+                updateTodos();
+              }
+            } catch (e) {
+              notify("Failed to update todo: " + text, true);
+            }
+          });
+        }
+      } catch (e) {
+        notify("Failed to fetch information for todo: " + text, true);
+      }
+    });
   });
 })();

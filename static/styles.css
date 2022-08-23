@@ -170,6 +170,8 @@ textarea {
   display: inline-block;
   margin-bottom: 8px;
   font-weight: normal;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .button:hover, .button:active, .button:focus {
   color: #fff;
@@ -187,6 +189,10 @@ textarea {
 /* custom styles */
 #mgmnt-panel {
   display: none;
+}
+#todos-container {
+  -webkit-user-select: none;
+  user-select: none;
 }
 .todo-list {
   padding: 0;
@@ -237,6 +243,8 @@ textarea {
   margin: 0 4px 4px 0;
   border: 1px solid #666;
   cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .tag-list-item.selected {
   background-color: #259b24;
@@ -252,6 +260,7 @@ textarea {
   color: #666;
 }
 .due-date {
-  float: right;
-  color: #C2185B;
+  text-align: right;
+  color: #666;
+  /* red: C2185B */
 }

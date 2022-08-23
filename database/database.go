@@ -100,6 +100,7 @@ func InitializeDatabase(filename string) {
     }
 
     // TODO: configurable
+    // To add more: sqlite3, .open data.db, INSERT INTO tags(name) values("adsf");
     _, err = stmt.Exec("Unsorted")
     if err != nil {
         log.Fatalf("Failed to initialize database: %s", err)
