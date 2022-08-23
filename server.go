@@ -9,6 +9,9 @@ import (
     // http router from julienschmidt
     "github.com/julienschmidt/httprouter"
 
+    // cors
+    "github.com/rs/cors"
+
     // own stuff
     "github.com/ohnx/gotodo/endpoints"
     "github.com/ohnx/gotodo/database"
@@ -51,8 +54,9 @@ func main() {
     }
 
     // Start server
+    handler := cors.Default().Handler(r)
     log.Printf("Server listening on 0.0.0.0:%s", port)
-    err := http.ListenAndServe(":" + port, r)
+    err := http.ListenAndServe(":" + port, handler)
     if err != nil {
         log.Fatalf("Failed to listen: %s", err)
     }

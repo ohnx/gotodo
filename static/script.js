@@ -1,4 +1,12 @@
-/* global localStorage */
+/* global localStorage, showdown */
+
+let converter = new showdown.Converter({
+  headerLevelStart: 2,
+  strikethrough: true,
+  tables: true,
+  tasklists: true,
+  emoji: true
+});
 
 // LocalStorage helper
 const LOCALSTORAGE_KEYS = {
@@ -6,7 +14,7 @@ const LOCALSTORAGE_KEYS = {
   USERNAME: 2,
   TAGS: 3
 };
-const API_ROOT = "/api";
+const API_ROOT = "http://nuc.int.masonx.ca:8080/api";
 
 // Global variables
 var todos = [];
@@ -421,6 +429,7 @@ function deleteTodo() {
       } else {
         notify("Successfully deleted todo");
         hideModal();
+        updateTodos();
       }
     } catch (e) {
       notify("Failed to delete todo: " + text, true);
@@ -443,13 +452,27 @@ function infoTodo() {
       } else {
         focus_values = json.todo;
         document.getElementById("md-name").innerHTML = focus_values.name;
-        document.getElementById("md-desc").innerHTML = focus_values.description;
+        document.getElementById("md-desc").innerHTML = converter.makeHtml(focus_values.description);
         showModal("detailedtodo");
       }
     } catch (e) {
       notify("Failed to fetch information for todo: " + text, true);
     }
   });
+}
+
+function startEditingTodo(is_new) {
+  showModal("edittodo");
+  document.getElementById("me-name").value = focus_values.name;
+  document.getElementById("me-description").value = focus_values.description;
+  document.getElementById("me-state").selectedIndex = focus_values.state - 1;
+  document.getElementById("me-tagid").selectedIndex = focus_values.tag_id - 1;
+  document.getElementById("me-public").checked = focus_values.public;
+
+  setTimeout(function () {
+    this.focus();
+    this.setSelectionRange(this.value.length, this.value.length);
+  }.bind(document.getElementById('me-description')), 10);
 }
 
 // Init functions
@@ -480,6 +503,10 @@ function registerUIButtons() {
     document.getElementById("me-tagid").selectedIndex = "0";
     document.getElementById("me-public").checked = false;
     showModal("edittodo");
+    setTimeout(function () {
+      this.focus();
+      this.setSelectionRange(this.value.length, this.value.length);
+    }.bind(document.getElementById('me-name')), 10);
     e.preventDefault();
   }, false);
 
@@ -491,12 +518,7 @@ function registerUIButtons() {
 
   // Modal - detailed todo - edit todo
   document.getElementById("md-edit").addEventListener('click', function (e) {
-    showModal("edittodo");
-    document.getElementById("me-name").value = focus_values.name;
-    document.getElementById("me-description").value = focus_values.description;
-    document.getElementById("me-state").selectedIndex = focus_values.state - 1;
-    document.getElementById("me-tagid").selectedIndex = focus_values.tag_id - 1;
-    document.getElementById("me-public").checked = focus_values.public;
+    startEditingTodo();
     e.preventDefault();
   }, false);
 
@@ -523,10 +545,46 @@ function registerUIButtons() {
   }, false);
 }
 
+
+
 (function() {
   registerModalCloses();
   registerUIButtons();
   checkLogin();
   updateTodos();
   fetchTags();
+  // nicer ux
+  document.getElementById('modal-backdrop').addEventListener('click', function (e) {
+    if (e.target == this) {
+      e.preventDefault();
+      hideModal();
+    }
+  });
+  document.addEventListener('keypress', function (e) {
+    if (e.target == document.body) {
+      if (modal_showing) {
+        if (modal_showing == 'modal-detailedtodo') {
+          if (e.key == 'e') {
+            startEditingTodo();
+            e.preventDefault();
+          }
+        }
+        if (e.key == 'Escape') {
+          e.preventDefault();
+          hideModal();
+        }
+      }
+    } else if (modal_showing == 'modal-edittodo') {
+      if (e.metaKey || e.ctrlKey) {
+        if (e.key == 's') {
+          updateTodo();
+          e.preventDefault();
+        } else if (e.key == 'x') {
+          hideModal();
+        }
+      } else if (e.key == 'Escape') {
+        e.preventDefault();
+      }
+    }
+  });
 })();
