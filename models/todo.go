@@ -3,6 +3,7 @@ package models
 import (
     // Standard library
     "log"
+    "time"
 
     // Own stuff
     "github.com/ohnx/gotodo/database"
@@ -11,13 +12,14 @@ import (
 type (
     // Represent a todo item
     Todo struct {
-        Id      int     `json:"id"`
-        State   int     `json:"state"`
-        TagId   int     `json:"tag_id"`
-        OwnerId int     `json:"owner_id"`
-        Public  bool    `json:"public"`
-        Name    string  `json:"name"`
-        Desc    string  `json:"description"`
+        Id      int         `json:"id"`
+        State   int         `json:"state"`
+        TagId   int         `json:"tag_id"`
+        OwnerId int         `json:"owner_id"`
+        Public  bool        `json:"public"`
+        Name    string      `json:"name"`
+        DueDate time.Time   `json:"due_date"`
+        Desc    string      `json:"description"`
     }
 )
 
@@ -32,7 +34,7 @@ func (todo *Todo) InsertValues() bool {
     conn := database.GetConnection()
 
     // prepare insert statement
-    stmt, err := conn.Prepare("INSERT INTO todos(state, tag_id, owner_id, public, name, description) values(?,?,?,?,?,?)")
+    stmt, err := conn.Prepare("INSERT INTO todos(state, tag_id, owner_id, public, name, duedate, description) values(?,?,?,?,?,?,?)")
 
     if err != nil {
         log.Printf("Warning: Failed to write to database: %s", err)
@@ -41,7 +43,7 @@ func (todo *Todo) InsertValues() bool {
     defer stmt.Close()
 
     // Execute insert statement
-    _, err = stmt.Exec(todo.State, todo.TagId, todo.OwnerId, todo.Public, todo.Name, todo.Desc)
+    _, err = stmt.Exec(todo.State, todo.TagId, todo.OwnerId, todo.Public, todo.Name, todo.DueDate, todo.Desc)
     if err != nil {
         log.Printf("Warning: Failed to write to database: %s", err)
         return false
@@ -62,7 +64,7 @@ func (todo *Todo) WriteValues() bool {
     conn := database.GetConnection()
 
     // prepare insert statement
-    stmt, err := conn.Prepare("UPDATE todos SET state = ?, tag_id = ?, public = ?, name = ?, description = ? WHERE id = ?")
+    stmt, err := conn.Prepare("UPDATE todos SET state = ?, tag_id = ?, public = ?, name = ?, duedate = ?, description = ? WHERE id = ?")
 
     if err != nil {
         log.Printf("Warning: Failed to write to database: %s", err)
@@ -71,7 +73,7 @@ func (todo *Todo) WriteValues() bool {
     defer stmt.Close()
 
     // Execute insert statement
-    _, err = stmt.Exec(todo.State, todo.TagId, todo.Public, todo.Name, todo.Desc, todo.Id)
+    _, err = stmt.Exec(todo.State, todo.TagId, todo.Public, todo.Name, todo.DueDate, todo.Desc, todo.Id)
     if err != nil {
         log.Printf("Warning: Failed to write to database: %s", err)
         return false
@@ -111,7 +113,7 @@ func (todo *Todo) ReadValues() bool {
     for res.Next() {
         var boolConv int
         // Only care about the 1st result
-        err = res.Scan(&todo.Id, &todo.State, &todo.TagId, &todo.OwnerId, &boolConv, &todo.Name, &todo.Desc)
+        err = res.Scan(&todo.Id, &todo.State, &todo.TagId, &todo.OwnerId, &boolConv, &todo.Name, &todo.DueDate, &todo.Desc)
         if err != nil {
             log.Printf("Warning: Failed to read database: %s", err)
             return false
@@ -211,7 +213,7 @@ func ListAllTodos(owner_id int) []Todo {
     conn := database.GetConnection()
 
     // prepare read statement
-    stmt, err := conn.Prepare("SELECT id,state,tag_id,name FROM todos WHERE public = 1 OR owner_id = ?")
+    stmt, err := conn.Prepare("SELECT id,state,tag_id,name,duedate FROM todos WHERE public = 1 OR owner_id = ?")
     if err != nil {
         log.Printf("Warning: Failed to read database: %s", err)
         return nil
@@ -234,7 +236,7 @@ func ListAllTodos(owner_id int) []Todo {
     for res.Next() {
         // Read in the values from the database
         var boolConv int
-        err = res.Scan(&todo.Id, &todo.State, &todo.TagId, &todo.Name)
+        err = res.Scan(&todo.Id, &todo.State, &todo.TagId, &todo.Name, &todo.DueDate)
         if err != nil {
             log.Printf("Warning: Failed to read database: %s", err)
             return nil

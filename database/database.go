@@ -35,6 +35,7 @@ CREATE TABLE todos (
 	owner_id integer,
 	public integer,
 	name varchar,
+	duedate datetime,
 	description text
 );
 

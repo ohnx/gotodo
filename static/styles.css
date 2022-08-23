@@ -246,3 +246,12 @@ textarea {
 #md-edit {
   display: none;
 }
+#me-duedate::before {
+  content: "Due date: ";
+  vertical-align: 6px;
+  color: #666;
+}
+.due-date {
+  float: right;
+  color: #C2185B;
+}

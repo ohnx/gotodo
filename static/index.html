@@ -73,6 +73,7 @@
       <div class="modal">
         <div class="modal-view" id="modal-detailedtodo">
           <h1 id="md-name">Todo Name</h1>
+          <div>Due date: <span id="md-duedate"></span></div>
           <div id="md-desc">Description of the Todo item</div>
           <div class="right">
             <a class="button" href="#" id="md-edit">Edit</a>
@@ -112,6 +113,9 @@
         </div>
         <div class="modal-view" id="modal-edittodo">
           <h1><input type="text" placeholder="Name" id="me-name" class="inherit"></h1>
+          <div>
+            <input type="datetime-local" id="me-duedate">
+          </div>
           <textarea id="me-description"></textarea>
           <select id="me-state">
             <option value="1">Ideas</option>

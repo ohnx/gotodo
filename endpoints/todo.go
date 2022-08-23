@@ -65,6 +65,7 @@ func (te TodoEndpoint) Update(w http.ResponseWriter, r *http.Request, p httprout
     if err != nil {
         // Failed to parse user input... call it a user error
         w.WriteHeader(400)
+        fmt.Fprintf(w, "Invalid input")
         return
     }
 

@@ -14,11 +14,6 @@ type (
     // Represent a token
     Token struct {
         Id      int     `json:"id"`
-        // TODO: I have no clue if this is correct or not
-        // Token type 1: Master token (create tokens?)
-        // Token type 2: Read, write, edit todos
-        // Token type 3: Create-only
-        // Token type 4: [WIP] Read-only
         Type    int     `json:"type"`
         Value   string  `json:"value"`
         OwnerId int     `json:"owner_id"`

@@ -64,6 +64,58 @@ function get(url, callback) {
   xmlhttp.send();
 }
 
+let daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+// date stuff - very cursed code that probably will break for other tz's tbh
+function serverDateToBrowser(server_date) {
+  var now = new Date(server_date);
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  return now.toISOString().slice(0,16);
+}
+
+function serverDateToPretty(server_date) {
+  var now = new Date(server_date);
+  return daysOfWeek[now.getDay()] + " " + now.toLocaleString();
+}
+
+function tomorrowAtNineAm() {
+  var tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(9);
+  tomorrow.setMinutes(-tomorrow.getTimezoneOffset());
+  return tomorrow.toISOString().slice(0,16);
+}
+
+function browserDateToServer(browser_date) {
+  return new Date(browser_date).toISOString();
+}
+
+const MS_IN_A_DAY = 1000*60*60*24;
+const MS_IN_A_WEEK = MS_IN_A_DAY*7;
+function prettyPrintDue(server_date) {
+  let now = new Date();
+  let due_date = new Date(server_date);
+  let time_delta = due_date - now;
+
+  if (time_delta < MS_IN_A_WEEK) {
+    // due within a week
+    if (time_delta < 0) {
+      // due in past, say the date
+      return due_date.getMonth() + "/" + due_date.getDay();
+    } else {
+      // due in future, say day of week + date
+      if (time_delta < MS_IN_A_DAY) {
+        return "today!";
+      }
+      return daysOfWeek[now.getDay()];
+    }
+  } else {
+    // too far in the future
+    return false;
+  }
+}
+
+// modal stuff
 var modal_showing = null;
 function showModal(name) {
   if (modal_showing) {
@@ -117,7 +169,7 @@ function genTagColors() {
   var q;
 
   // load existing colours
-  var oldColours = null;//localStorage.getItem(LOCALSTORAGE_KEYS.TAGS);
+  var oldColours = localStorage.getItem(LOCALSTORAGE_KEYS.TAGS);
   if (oldColours) {
     var oldColors = JSON.parse(oldColours);
     for (var i = 0; i < oldColors.length; i++) {
@@ -179,7 +231,12 @@ function updateFilter() {
 
     // it is, append the data
     strs[todos[i].state] += "<li style=\"color: " + tagToColor(todos[i].tag_id) + "\" ";
-    strs[todos[i].state] += "class=\"todo-item\" data-id=\"" + todos[i].id + "\">" + todos[i].name + "</li>";
+    strs[todos[i].state] += "class=\"todo-item\" data-id=\"" + todos[i].id + "\">" + todos[i].name;
+    let dueStr = prettyPrintDue(todos[i].due_date);
+    if (dueStr) {
+      strs[todos[i].state] += "<div class=\"due-date\"\" data-id=\"" + todos[i].id + "\">(due " + dueStr + ")</div>";
+    }
+    strs[todos[i].state] += "</li>";
   }
   for (var i = 1; i < 5; i++) {
     document.getElementById("todos-"+i).innerHTML = strs[i];
@@ -395,6 +452,7 @@ function updateTodo() {
       tag_id: parseInt(document.getElementById("me-tagid").value),
       public: document.getElementById("me-public").value == "yes",
       name: document.getElementById("me-name").value,
+      due_date: browserDateToServer(document.getElementById("me-duedate").value),
       description: document.getElementById("me-description").value,
     },
     authority: localStorage.getItem(LOCALSTORAGE_KEYS.TOKEN),
@@ -452,6 +510,7 @@ function infoTodo() {
       } else {
         focus_values = json.todo;
         document.getElementById("md-name").innerHTML = focus_values.name;
+        document.getElementById("md-duedate").innerHTML = serverDateToPretty(focus_values.due_date);
         document.getElementById("md-desc").innerHTML = converter.makeHtml(focus_values.description);
         showModal("detailedtodo");
       }
@@ -464,6 +523,7 @@ function infoTodo() {
 function startEditingTodo(is_new) {
   showModal("edittodo");
   document.getElementById("me-name").value = focus_values.name;
+  document.getElementById("me-duedate").value = serverDateToBrowser(focus_values.due_date);
   document.getElementById("me-description").value = focus_values.description;
   document.getElementById("me-state").selectedIndex = focus_values.state - 1;
   document.getElementById("me-tagid").selectedIndex = focus_values.tag_id - 1;
@@ -498,6 +558,7 @@ function registerUIButtons() {
   document.getElementById("mgmnt-newtodo").addEventListener('click', function(e) {
     focus_id = -1;
     document.getElementById("me-name").value = "";
+    document.getElementById("me-duedate").value = tomorrowAtNineAm();
     document.getElementById("me-description").value = "";
     document.getElementById("me-state").selectedIndex = "0";
     document.getElementById("me-tagid").selectedIndex = "0";
@@ -585,6 +646,9 @@ function registerUIButtons() {
       } else if (e.key == 'Escape') {
         e.preventDefault();
       }
+    }
+    if (e.key == 'Escape') {
+      e.preventDefault();
     }
   });
 })();
